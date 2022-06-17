@@ -1,0 +1,231 @@
+trigger:
+  - main
+
+parameters:
+  - name: azureSubscription
+    displayName: Id of the service connection to your Azure subscription
+    type: string
+
+stages:
+  - stage: build
+    pool: 
+      vmImage: windows-2022
+    jobs:
+      - job:
+        displayName: Create build artefact
+        steps:
+          - checkout: self
+          - task: Bash@3
+            displayName: Build
+            inputs:
+              targetType: inline
+              script: |
+                dotnet publish --self-contained false `
+                  --runtime linux-x64 `
+                  --output ./output/Sample-Linux `
+                  ./Sample/Sample.csproj
+                dotnet publish --self-contained false `
+                  --runtime win-x64 `
+                  --output ./output/Sample-Win `
+                  ./Sample/Sample.csproj
+          - task: PowerShell@2
+            displayName: Archive
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Include hidden files in the archive
+                Get-ChildItem -Path ./output/Sample-Win/ -Force `
+                  | Compress-Archive -DestinationPath ./output/Sample-Win-Full.zip
+                # This command does not include hidden machines on my Mac
+                Compress-Archive -Path ./output/Sample-Win/* `
+                  -DestinationPath ./output/Sample-Win.zip
+                # Repeat, but for Linux
+                Get-ChildItem -Path ./output/Sample-Linux/ -Force `
+                  | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
+                Compress-Archive -Path ./output/Sample-Linux/* `
+                  -DestinationPath ./output/Sample-Linux.zip
+          - publish: ./output/Sample-Win-Full.zip
+            artifact: Sample-Win-Full
+            displayName: Publish Sample-Win-Full.zip
+          - publish: ./output/Sample-Win.zip
+            artifact: Sample-Win
+            displayName: Publish Sample-Win.zip
+          - publish: ./output/Sample-Linux-Full.zip
+            artifact: Sample-Linux-Full
+            displayName: Publish Sample-Linux-Full.zip
+          - publish: ./output/Sample-Linux.zip
+            artifact: Sample-Linux
+            displayName: Publish Sample-Linux.zip
+
+  - stage: deploy
+    pool: 
+      vmImage: windows-2022
+    jobs:
+      - job: winFunc
+        displayName: Create Windows Sample Func
+        steps:
+          - checkout: none
+          - download: current
+            artifact: Sample-Win-Full
+          - task: AzureCLI@2
+            displayName: Create or update function infrastructure
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $resourceName = "win-func-silver-785"
+                $resourceLocation = "UK South"
+                $storageResource = "winfuncsilver785"
+                $servicePlanSku = "B1"
+                
+                "create resource group '$resourceName' in '$resourceLocation'"
+                az group create --name $resourceName --location $resourceLocation
+                
+                "create storage account '$storageResource' in '$resourceLocation'"
+                az storage account create --name $storageResource `
+                --location $resourceLocation `
+                --resource-group $resourceName `
+                --sku Standard_LRS `
+                --allow-blob-public-access false `
+                --https-only true `
+                --min-tls-version TLS1_2 `
+                --kind StorageV2
+                
+                "create appservice plan '$resourceName' in '$resourceLocation'"
+                az functionapp plan create --name $resourceName `
+                --resource-group $resourceName `
+                --sku $servicePlanSku
+                
+                "check if function '$resourceName' exists"
+                $funcExists = az functionapp list --resource-group $resourceName `
+                --query "contains([].name, '$resourceName')"
+                
+                if ($funcExists -eq $true) {
+                  "function exists"
+                } else {
+                  "function does not exist, creating now"
+                  az functionapp create --name $resourceName `
+                  --resource-group $resourceName `
+                  --storage-account $storageResource `
+                  --plan $resourceName `
+                  --disable-app-insights false `
+                  --functions-version 4 `
+                  --runtime dotnet
+                }
+                
+                "update function '$resourceName'"
+                az functionapp update --name $resourceName `
+                --resource-group $resourceName `
+                --set httpsOnly=true
+                
+                "update '$resourceName' web app config"
+                az functionapp config set --name $resourceName `
+                --resource-group $resourceName `
+                --http20-enabled true `
+                --min-tls-version 1.2 `
+                --ftps-state Disabled `
+                --net-framework-version v6.0 `
+                --always-on true
+                
+                "set app settings"
+                az functionapp config appsettings set --name $resourceName `
+                --resource-group $resourceName `
+                --settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
+                
+                # Taken from https://github.com/projectkudu/kudu/wiki/Deploying-from-a-zip-file-or-url
+                #"set deployment source"
+                #$accessToken = az account get-access-token --query "accessToken" --output tsv
+                #curl -X POST -T "$(Pipeline.Workspace)/ample-Win-Full/ample-Win-Full.zip" `
+                #-H "Authorization: Bearer $accessToken" `
+                #"https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
+                
+                az functionapp deployment source config-zip --name $resourceName `
+                --resource-group $resourceName `
+                --src $(Pipeline.Workspace)/Sample-Win-Full/Sample-Win-Full.zip `
+                --debug
+      - job:
+        displayName: Create Linux Sample Func
+        dependsOn: winFunc
+        steps:
+          - checkout: none
+          - download: current
+            artifact: Sample-Linux-Full
+          - task: AzureCLI@2
+            displayName: Create or update function infrastructure
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: pscore
+              scriptLocation: inlineScript
+              inlineScript: |
+                $resourceName = "linux-func-carbon-432"
+                $resourceLocation = "UK South"
+                $storageResource = "linuxfunccarbon432"
+                $servicePlanSku = "B1"
+                
+                "create resource group '$resourceName' in '$resourceLocation'"
+                az group create --name $resourceName --location $resourceLocation
+                
+                "create storage account '$storageResource' in '$resourceLocation'"
+                az storage account create --name $storageResource `
+                --location $resourceLocation `
+                --resource-group $resourceName `
+                --sku Standard_LRS `
+                --allow-blob-public-access false `
+                --https-only true `
+                --min-tls-version TLS1_2 `
+                --kind StorageV2
+                
+                "create appservice plan '$resourceName' in '$resourceLocation'"
+                az functionapp plan create --name $resourceName `
+                --resource-group $resourceName `
+                --sku $servicePlanSku `
+                --is-linux
+                
+                "check if function '$resourceName' exists"
+                $funcExists = az functionapp list --resource-group $resourceName `
+                --query "contains([].name, '$resourceName')"
+                
+                if ($funcExists -eq $true) {
+                  "function exists"
+                } else {
+                  "function does not exist, creating now"
+                  az functionapp create --name $resourceName `
+                  --resource-group $resourceName `
+                  --storage-account $storageResource `
+                  --plan $resourceName `
+                  --disable-app-insights false `
+                  --functions-version 4 `
+                  --runtime dotnet
+                }
+                
+                "update function '$resourceName'"
+                az functionapp update --name $resourceName `
+                --resource-group $resourceName `
+                --set httpsOnly=true
+                
+                "update '$resourceName' web app config"
+                az functionapp config set --name $resourceName `
+                --resource-group $resourceName `
+                --http20-enabled true `
+                --min-tls-version 1.2 `
+                --ftps-state Disabled `
+                --net-framework-version v6.0 `
+                --always-on true
+                
+                "set app settings"
+                az functionapp config appsettings set --name $resourceName `
+                --resource-group $resourceName `
+                --settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
+                
+                # Taken from https://github.com/projectkudu/kudu/wiki/Deploying-from-a-zip-file-or-url
+                #"set deployment source"
+                #$accessToken = az account get-access-token --query "accessToken" --output tsv
+                #curl -X POST -T "$(Pipeline.Workspace)/ample-Win-Full/ample-Win-Full.zip" `
+                #-H "Authorization: Bearer $accessToken" `
+                #"https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
+                
+                az functionapp deployment source config-zip --name $resourceName `
+                --resource-group $resourceName `
+                --src $(Pipeline.Workspace)/Sample-Linux-Full/Sample-Linux-Full.zip `
+                --debug
