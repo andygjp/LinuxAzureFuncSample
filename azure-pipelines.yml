@@ -20,11 +20,11 @@ stages:
             inputs:
               targetType: inline
               script: |
-                dotnet publish --self-contained false \
+                dotnet publish --self-contained true \
                   --runtime linux-x64 \
                   --output ./output/Sample-Linux \
                   ./Sample/Sample.csproj
-                dotnet publish --self-contained false \
+                dotnet publish --self-contained true \
                   --runtime win-x64 \
                   --output ./output/Sample-Win \
                   ./Sample/Sample.csproj
