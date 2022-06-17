@@ -20,13 +20,13 @@ stages:
             inputs:
               targetType: inline
               script: |
-                dotnet publish --self-contained false `
-                  --runtime linux-x64 `
-                  --output ./output/Sample-Linux `
+                dotnet publish --self-contained false \
+                  --runtime linux-x64 \
+                  --output ./output/Sample-Linux \
                   ./Sample/Sample.csproj
-                dotnet publish --self-contained false `
-                  --runtime win-x64 `
-                  --output ./output/Sample-Win `
+                dotnet publish --self-contained false \
+                  --runtime win-x64 \
+                  --output ./output/Sample-Win \
                   ./Sample/Sample.csproj
           - task: PowerShell@2
             displayName: Archive
