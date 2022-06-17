@@ -70,7 +70,7 @@ stages:
           - task: AzureCLI@2
             displayName: Create or update function infrastructure
             inputs:
-              azureSubscription: $(azureSubscription)
+              azureSubscription: ${{ parameters.azureSubscription }}
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
@@ -154,7 +154,7 @@ stages:
           - task: AzureCLI@2
             displayName: Create or update function infrastructure
             inputs:
-              azureSubscription: $(azureSubscription)
+              azureSubscription: ${{ parameters.azureSubscription }}
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
