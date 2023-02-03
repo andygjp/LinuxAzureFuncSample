@@ -44,7 +44,7 @@ stages:
                   | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
                 Compress-Archive -Path ./output/Sample-Linux/* `
                   -DestinationPath ./output/Sample-Linux.zip
-                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
+                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/{*,.[!.]*}
           - publish: ./output/Sample-Win-Full.zip
             artifact: Sample-Win-Full
             displayName: Publish Sample-Win-Full.zip
@@ -225,12 +225,12 @@ stages:
                 "set deployment source"
 
                 # Taken from https://github.com/projectkudu/kudu/wiki/Deploying-from-a-zip-file-or-url
-                $accessToken = az account get-access-token --query "accessToken" --output tsv
-                curl -X POST -T "$(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip" `
-                -H "Authorization: Bearer $accessToken" `
-                "https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
+                #$accessToken = az account get-access-token --query "accessToken" --output tsv
+                #curl -X POST -T "$(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip" `
+                #-H "Authorization: Bearer $accessToken" `
+                #"https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
                 
-                #az functionapp deployment source config-zip --name $resourceName `
-                #--resource-group $resourceName `
-                #--src $(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip `
-                #--debug
+                az functionapp deployment source config-zip --name $resourceName `
+                --resource-group $resourceName `
+                --src $(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip `
+                --debug
