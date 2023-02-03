@@ -162,9 +162,9 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $resourceName = "linux-func-carbon-444"
+                $resourceName = "linux-func-carbon-454"
                 $resourceLocation = "UK South"
-                $storageResource = "linuxfunccarbon444"
+                $storageResource = "linuxfunccarbon454"
                 $servicePlanSku = "B1"
                 
                 "create resource group '$resourceName' in '$resourceLocation'"
@@ -222,14 +222,15 @@ stages:
                 --resource-group $resourceName `
                 --settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
                 
+                "set deployment source"
+
                 # Taken from https://github.com/projectkudu/kudu/wiki/Deploying-from-a-zip-file-or-url
-                #"set deployment source"
-                #$accessToken = az account get-access-token --query "accessToken" --output tsv
-                #curl -X POST -T "$(Pipeline.Workspace)/ample-Win-Full/ample-Win-Full.zip" `
-                #-H "Authorization: Bearer $accessToken" `
-                #"https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
+                $accessToken = az account get-access-token --query "accessToken" --output tsv
+                curl -X POST -T "$(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip" `
+                -H "Authorization: Bearer $accessToken" `
+                "https://$resourceName.scm.azurewebsites.net/api/zipdeploy"
                 
-                az functionapp deployment source config-zip --name $resourceName `
-                --resource-group $resourceName `
-                --src $(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip `
-                --debug
+                #az functionapp deployment source config-zip --name $resourceName `
+                #--resource-group $resourceName `
+                #--src $(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip `
+                #--debug
