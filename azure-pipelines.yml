@@ -162,9 +162,9 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $resourceName = "linux-func-carbon-432"
+                $resourceName = "linux-func-carbon-444"
                 $resourceLocation = "UK South"
-                $storageResource = "linuxfunccarbon432"
+                $storageResource = "linuxfunccarbon444"
                 $servicePlanSku = "B1"
                 
                 "create resource group '$resourceName' in '$resourceLocation'"
