@@ -44,7 +44,7 @@ stages:
                   | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
                 Compress-Archive -Path ./output/Sample-Linux/* `
                   -DestinationPath ./output/Sample-Linux.zip
-                7zz a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
+                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
           - publish: ./output/Sample-Win-Full.zip
             artifact: Sample-Win-Full
             displayName: Publish Sample-Win-Full.zip
