@@ -44,6 +44,7 @@ stages:
                   | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
                 Compress-Archive -Path ./output/Sample-Linux/* `
                   -DestinationPath ./output/Sample-Linux.zip
+                7za a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
           - publish: ./output/Sample-Win-Full.zip
             artifact: Sample-Win-Full
             displayName: Publish Sample-Win-Full.zip
@@ -56,6 +57,9 @@ stages:
           - publish: ./output/Sample-Linux.zip
             artifact: Sample-Linux
             displayName: Publish Sample-Linux.zip
+          - publish: ./output/Sample-Linux-Seven.zip
+            artifact: Sample-Linux-Seven
+            displayName: Publish Sample-Linux-Seven.zip
 
   - stage: deploy
     pool: 
@@ -150,7 +154,7 @@ stages:
         steps:
           - checkout: none
           - download: current
-            artifact: Sample-Linux-Full
+            artifact: Sample-Linux-Seven
           - task: AzureCLI@2
             displayName: Create or update function infrastructure
             inputs:
@@ -227,5 +231,5 @@ stages:
                 
                 az functionapp deployment source config-zip --name $resourceName `
                 --resource-group $resourceName `
-                --src $(Pipeline.Workspace)/Sample-Linux-Full/Sample-Linux-Full.zip `
+                --src $(Pipeline.Workspace)/Sample-Linux-Seven/Sample-Linux-Seven.zip `
                 --debug
