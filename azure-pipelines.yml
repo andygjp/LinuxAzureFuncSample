@@ -21,11 +21,11 @@ stages:
               targetType: inline
               script: |
                 dotnet publish --self-contained true \
-                  --runtime linux-x64 \
+                  --runtime linux-x86 \
                   --output ./output/Sample-Linux \
                   ./Sample/Sample.csproj
                 dotnet publish --self-contained true \
-                  --runtime win-x64 \
+                  --runtime win-x86 \
                   --output ./output/Sample-Win \
                   ./Sample/Sample.csproj
           - task: PowerShell@2
@@ -44,7 +44,7 @@ stages:
                   | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
                 Compress-Archive -Path ./output/Sample-Linux/* `
                   -DestinationPath ./output/Sample-Linux.zip
-                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/{*,.[!.]*}
+                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
           - publish: ./output/Sample-Win-Full.zip
             artifact: Sample-Win-Full
             displayName: Publish Sample-Win-Full.zip
