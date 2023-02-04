@@ -21,11 +21,11 @@ stages:
               targetType: inline
               script: |
                 dotnet publish --self-contained true \
-                  --runtime linux-x86 \
+                  --runtime linux-x64 \
                   --output ./output/Sample-Linux \
                   ./Sample/Sample.csproj
                 dotnet publish --self-contained true \
-                  --runtime win-x86 \
+                  --runtime win-x64 \
                   --output ./output/Sample-Win \
                   ./Sample/Sample.csproj
           - task: PowerShell@2
@@ -215,6 +215,7 @@ stages:
                 --min-tls-version 1.2 `
                 --ftps-state Disabled `
                 --net-framework-version v6.0 `
+                --use-32bit-worker-process false `
                 --always-on true
                 
                 "set app settings"
