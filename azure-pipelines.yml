@@ -162,9 +162,9 @@ stages:
               scriptType: pscore
               scriptLocation: inlineScript
               inlineScript: |
-                $resourceName = "linux-func-carbon-456"
+                $resourceName = "linux-func-carbon-476"
                 $resourceLocation = "UK South"
-                $storageResource = "linuxfunccarbon456"
+                $storageResource = "linuxfunccarbon476"
                 $servicePlanSku = "B1"
                 
                 "create resource group '$resourceName' in '$resourceLocation'"
@@ -214,14 +214,17 @@ stages:
                 --http20-enabled true `
                 --min-tls-version 1.2 `
                 --ftps-state Disabled `
-                --linux-fx-version 'DOTNET|6.0' `
+                --net-framework-version v6.0 `
                 --use-32bit-worker-process false `
                 --always-on true
                 
-                #"set app settings"
+                "set app settings"
                 #az functionapp config appsettings set --name $resourceName `
                 #--resource-group $resourceName `
                 #--settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
+                az functionapp config appsettings set --name $resourceName `
+                --resource-group $resourceName `
+                --settings "SCM_DO_BUILD_DURING_DEPLOYMENT=true"
                 
                 "set deployment source"
 
