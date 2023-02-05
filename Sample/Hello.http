@@ -1,0 +1,12 @@
+GET https://linux-func-carbon-476.azurewebsites.net/admin/functions
+x-functions-key: 
+
+###
+
+GET https://linux-func-carbon-476.azurewebsites.net/admin/functions/Hello
+x-functions-key: 
+
+###
+
+GET https://linux-func-carbon-476.azurewebsites.net/api/Hello
+x-functions-key: 
