@@ -44,7 +44,8 @@ stages:
                   | Compress-Archive -DestinationPath ./output/Sample-Linux-Full.zip
                 Compress-Archive -Path ./output/Sample-Linux/* `
                   -DestinationPath ./output/Sample-Linux.zip
-                7z a ./output/Sample-Linux-Seven.zip ./output/Sample-Linux/
+                cd ./output/Sample-Linux
+                7z a ../Sample-Linux-Seven.zip .
           - publish: ./output/Sample-Win-Full.zip
             artifact: Sample-Win-Full
             displayName: Publish Sample-Win-Full.zip
@@ -215,16 +216,12 @@ stages:
                 --min-tls-version 1.2 `
                 --ftps-state Disabled `
                 --net-framework-version v6.0 `
-                --use-32bit-worker-process false `
                 --always-on true
                 
                 "set app settings"
-                #az functionapp config appsettings set --name $resourceName `
-                #--resource-group $resourceName `
-                #--settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
                 az functionapp config appsettings set --name $resourceName `
                 --resource-group $resourceName `
-                --settings "SCM_DO_BUILD_DURING_DEPLOYMENT=true"
+                --settings "FUNCTIONS_WORKER_RUNTIME=dotnet-isolated" "WEBSITE_RUN_FROM_PACKAGE=0" "SCM_DO_BUILD_DURING_DEPLOYMENT=false"
                 
                 "set deployment source"
 
